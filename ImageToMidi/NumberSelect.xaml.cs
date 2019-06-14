@@ -20,9 +20,75 @@ namespace ImageToMidi
     /// </summary>
     public partial class NumberSelect : UserControl
     {
+        public decimal Value
+        { get => (decimal)GetValue(ValueProperty); set => SetValue(ValueProperty, value); }
+        public static readonly DependencyProperty ValueProperty = DependencyProperty.Register("Value", typeof(decimal), typeof(NumberSelect), new PropertyMetadata((decimal)0));
+        public int DecimalPoints
+        { get => (int)GetValue(DecimalPointsProperty); set => SetValue(DecimalPointsProperty, value); }
+        public static readonly DependencyProperty DecimalPointsProperty = DependencyProperty.Register("DecimalPoints", typeof(int), typeof(NumberSelect), new PropertyMetadata((int)0));
+        public decimal Minimum
+        { get => (decimal)GetValue(MinimumProperty); set => SetValue(MinimumProperty, value); }
+        public static readonly DependencyProperty MinimumProperty = DependencyProperty.Register("Minimum", typeof(decimal), typeof(NumberSelect), new PropertyMetadata((decimal)0));
+        public decimal Maximum
+        { get => (decimal)GetValue(MaximumProperty); set => SetValue(MaximumProperty, value); }
+        public static readonly DependencyProperty MaximumProperty = DependencyProperty.Register("Maximum", typeof(decimal), typeof(NumberSelect), new PropertyMetadata((decimal)1000));
+        public decimal Step
+        { get => (decimal)GetValue(StepProperty); set => SetValue(StepProperty, value); }
+        public static readonly DependencyProperty StepProperty = DependencyProperty.Register("Step", typeof(decimal), typeof(NumberSelect), new PropertyMetadata((decimal)1));
+
+
+
+        string prevText = "";
+
         public NumberSelect()
         {
             InitializeComponent();
+
+            prevText = Value.ToString();
+            textBox.Text = prevText;
+        }
+
+        private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            try
+            {
+                decimal _d = Convert.ToDecimal(textBox.Text);
+                decimal d = Decimal.Round(_d, DecimalPoints);
+                if (d < Minimum) d = Minimum;
+                if (d > Maximum) d = Maximum;
+                if (_d != d) textBox.Text = d.ToString();
+                else
+                {
+                    Value = d;
+                }
+            }
+            catch
+            {
+                textBox.Text = prevText;
+            }
+        }
+
+        private void TextBox_TextInput(object sender, TextCompositionEventArgs e)
+        {
+
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            var d = Value + Step;
+            if (d < Minimum) d = Minimum;
+            if (d > Maximum) d = Maximum;
+            Value = d;
+            textBox.Text = Value.ToString();
+        }
+
+        private void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+            var d = Value - Step;
+            if (d < Minimum) d = Minimum;
+            if (d > Maximum) d = Maximum;
+            Value = d;
+            textBox.Text = Value.ToString();
         }
     }
 }

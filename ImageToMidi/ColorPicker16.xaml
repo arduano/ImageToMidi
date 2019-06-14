@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:ImageToMidi"        
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:system="clr-namespace:System;assembly=mscorlib"
-             mc:Ignorable="d" Height="Auto" Width="Auto" SizeChanged="UserControl_SizeChanged" PreviewMouseDown="UserControl_PreviewMouseDown">
+             mc:Ignorable="d" Height="Auto" Width="Auto" SizeChanged="UserControl_SizeChanged">
     <UserControl.Resources>
         <system:Double x:Key="TileSize">30</system:Double>
     </UserControl.Resources>

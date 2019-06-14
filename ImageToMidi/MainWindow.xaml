@@ -60,6 +60,31 @@
                         <Rectangle x:Name="selectedHighlightRight" Opacity="0" Fill="{DynamicResource PrimaryHueMidBrush}"/>
                     </Grid>
                 </Grid>
+                <Grid VerticalAlignment="Bottom" Height="114">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="268*"/>
+                        <ColumnDefinition Width="217*"/>
+                    </Grid.ColumnDefinitions>
+                    <DockPanel Grid.Column="1" LastChildFill="False">
+                        <Grid DockPanel.Dock="Bottom" HorizontalAlignment="Left" Margin="0,10,0,0" VerticalAlignment="Top" Height="26">
+                            <Label>Ticks per Pixel</Label>
+                            <local:NumberSelect Width="80" Minimum="1" Maximum="65535" Margin="100,0,0,0"></local:NumberSelect>
+                        </Grid>
+                        <Grid DockPanel.Dock="Bottom" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top" Height="26">
+                            <Label>MIDI PPQ</Label>
+                            <local:NumberSelect Width="80" Minimum="1" Maximum="65535" Margin="100,0,0,0"></local:NumberSelect>
+                        </Grid>
+                    </DockPanel>
+                    <DockPanel LastChildFill="False">
+                        <DockPanel DockPanel.Dock="Bottom" HorizontalAlignment="Left" Margin="0,5,0,0" VerticalAlignment="Top" Height="26">
+                            <Label>Maximum Note Length</Label>
+                            <local:NumberSelect Width="80" Minimum="1" Maximum="65535"></local:NumberSelect>
+                        </DockPanel>
+                        <RadioButton DockPanel.Dock="Bottom" Content="Start of the image" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5,5,0,0"/>
+                        <RadioButton DockPanel.Dock="Bottom" Content="Start of the notes" HorizontalAlignment="Left" Grid.Row="1" VerticalAlignment="Top" Margin="5,0,0,0"/>
+                        <Label DockPanel.Dock="Bottom">Measure note length from...</Label>
+                    </DockPanel>
+                </Grid>
             </Grid>
             <DockPanel LastChildFill="True" Margin="10" Grid.Column="2">
                 <Button DockPanel.Dock="Bottom" x:Name="saveMidi" Content="Export MIDI" materialDesign:RippleAssist.RippleSizeMultiplier="2" Margin="0,15,0,0" Click="BrowseImage_Click"/>

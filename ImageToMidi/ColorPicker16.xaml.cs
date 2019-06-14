@@ -31,7 +31,7 @@ namespace ImageToMidi
         public ColorPicker16()
         {
             InitializeComponent();
-            for(int i = 0; i < 16; i++)
+            for (int i = 0; i < 16; i++)
             {
                 getButton(i).Background = Brushes.Transparent;
                 colors[i] = Colors.Transparent;
@@ -63,10 +63,19 @@ namespace ImageToMidi
             }
             else
             {
-                ((PackIcon)b.Content).Kind = PackIconKind.Vanish;
-                colorPickerButton = id;
-                lastPicker = id;
-                PickStart();
+                if (colorPickerButton == id)
+                {
+                    ((PackIcon)getButton(colorPickerButton).Content).Kind = PackIconKind.Eyedropper;
+                    colorPickerButton = -1;
+                    PickStop();
+                }
+                else
+                {
+                    ((PackIcon)b.Content).Kind = PackIconKind.Vanish;
+                    colorPickerButton = id;
+                    lastPicker = id;
+                    PickStart();
+                }
             }
         }
 
@@ -76,16 +85,6 @@ namespace ImageToMidi
         }
 
         private void Button_LostFocus(object sender, RoutedEventArgs e)
-        {
-            if(colorPickerButton != -1)
-            {
-                ((PackIcon)getButton(colorPickerButton).Content).Kind = PackIconKind.Eyedropper;
-                colorPickerButton = -1;
-                PickStop(); 
-            }
-        }
-
-        private void UserControl_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             if (colorPickerButton != -1)
             {
