@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -36,7 +37,9 @@ namespace ImageToMidi
         int openedImageWidth = 0;
         int openedImageHeight = 0;
         string openedImagePath = "";
-        
+        BitmapPalette chosenPalette = null;
+
+        ConversionProcess convert = null;
 
         bool colorPick = false;
 
@@ -90,9 +93,12 @@ namespace ImageToMidi
             MakeFadeInOut(selectedHighlightLeft);
             MakeFadeInOut(selectedHighlightRight);
             MakeFadeInOut(colPickerHint);
+            MakeFadeInOut(openedImage);
+            MakeFadeInOut(genImage);
 
             colPicker.PickStart += ColPicker_PickStart;
             colPicker.PickStop += ColPicker_PickStop;
+            colPicker.PaletteChanged += ReloadPreview;
         }
 
         private void ExitButton_Click(object sender, RoutedEventArgs e)
@@ -122,6 +128,7 @@ namespace ImageToMidi
             if (!leftSelected)
                 TriggerMenuTransition(true);
             leftSelected = true;
+            ReloadPreview();
         }
 
         private void ColorEventsSelect_Click(object sender, RoutedEventArgs e)
@@ -129,6 +136,7 @@ namespace ImageToMidi
             if (leftSelected)
                 TriggerMenuTransition(false);
             leftSelected = false;
+            ReloadPreview();
         }
 
         private void BrowseImage_Click(object sender, RoutedEventArgs e)
@@ -156,6 +164,7 @@ namespace ImageToMidi
             openedImage.Source = src;
             openedImageSrc = src;
             ReloadAutoPalette();
+            ((Storyboard)openedImage.GetValue(FadeInStoryboard)).Begin();
         }
 
         private void OpenedImage_MouseDown(object sender, MouseButtonEventArgs e)
@@ -241,6 +250,67 @@ namespace ImageToMidi
                     }
                 }
             }
+            chosenPalette = palette;
+            ReloadPreview();
+        }
+
+        void ReloadPreview()
+        {
+            if (openedImage == null) return;
+            if (convert != null) convert.Cancel();
+            var palette = chosenPalette;
+            if (leftSelected) palette = colPicker.GetPalette();
+            convert = new ConversionProcess(palette, openedImagePixels, openedImageWidth == 256);
+            convert.RunProcessAsync(ShowPreview);
+            genImage.Source = null;
+            saveMidi.IsEnabled = false;
+        }
+
+        BitmapImage BitmapToImageSource(System.Drawing.Bitmap bitmap)
+        {
+            try
+            {
+                using (MemoryStream memory = new MemoryStream())
+                {
+                    bitmap.Save(memory, System.Drawing.Imaging.ImageFormat.Png);
+                    memory.Position = 0;
+                    BitmapImage bitmapimage = new BitmapImage();
+                    bitmapimage.BeginInit();
+                    bitmapimage.StreamSource = memory;
+                    bitmapimage.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmapimage.EndInit();
+
+                    return bitmapimage;
+                }
+            }
+            catch { return null; }
+        }
+
+        void ShowPreview()
+        {
+            try
+            {
+                var src = convert.Image;
+                Dispatcher.Invoke(() =>
+                {
+                    var bmp = BitmapToImageSource(src);
+                    if (bmp != null)
+                    {
+                        genImage.Source = bmp;
+                        saveMidi.IsEnabled = true;
+                        ((Storyboard)genImage.GetValue(FadeInStoryboard)).Begin();
+                    }
+                });
+            }
+            catch { }
+        }
+
+        private void SaveMidi_Click(object sender, RoutedEventArgs e)
+        {
+            //ConversionProcess process = new ConversionProcess(chosenPalette, openedImagePixels, openedImageWidth == 256, false, 10);
+            //process.RunProcess();
+            //genImage.Source = process.GenerateImage();
+            //process.WriteMidi("E:\\\\imgtest.mid", (int)ticksPerPixel.Value, (int)midiPPQ.Value, true);
         }
     }
 }

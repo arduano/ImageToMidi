@@ -27,6 +27,7 @@ namespace ImageToMidi
 
         public event Action PickStart;
         public event Action PickStop;
+        public event Action PaletteChanged;
 
         public ColorPicker16()
         {
@@ -60,6 +61,7 @@ namespace ImageToMidi
                 b.Background = Brushes.Transparent;
                 ((PackIcon)b.Content).Kind = PackIconKind.Eyedropper;
                 set[id] = false;
+                PaletteChanged();
             }
             else
             {
@@ -103,6 +105,17 @@ namespace ImageToMidi
             ((PackIcon)getButton(colorPickerButton).Content).Kind = PackIconKind.Tick;
             colorPickerButton = -1;
             PickStop();
+            PaletteChanged();
+        }
+
+        public BitmapPalette GetPalette()
+        {
+            List<Color> c = new List<Color>();
+            for (int i = 0; i < 16; i++)
+                if (set[i])
+                    c.Add(colors[i]);
+            if (c.Count == 0) c.Add(Colors.Black);
+            return new BitmapPalette(c);
         }
     }
 }

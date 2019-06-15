@@ -95,7 +95,8 @@ namespace ImageToMidi
             var old = Value;
             Value = d;
             textBox.Text = Value.ToString();
-            RaiseEvent(new RoutedPropertyChangedEventArgs<decimal>(old, d, ValueChangedEvent));
+            if (old != d)
+                RaiseEvent(new RoutedPropertyChangedEventArgs<decimal>(old, d, ValueChangedEvent));
         }
 
         private void Button_Click_1(object sender, RoutedEventArgs e)
@@ -106,7 +107,8 @@ namespace ImageToMidi
             var old = Value;
             Value = d;
             textBox.Text = Value.ToString();
-            RaiseEvent(new RoutedPropertyChangedEventArgs<decimal>(old, d, ValueChangedEvent));
+            if (old != d)
+                RaiseEvent(new RoutedPropertyChangedEventArgs<decimal>(old, d, ValueChangedEvent));
         }
     }
 }
