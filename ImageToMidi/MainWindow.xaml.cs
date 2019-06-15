@@ -31,6 +31,7 @@ namespace ImageToMidi
 
         bool leftSelected = true;
 
+        BitmapSource openedImageSrc = null;
         byte[] openedImagePixels = null;
         int openedImageWidth = 0;
         int openedImageHeight = 0;
@@ -152,6 +153,8 @@ namespace ImageToMidi
             openedImagePixels = new byte[size];
             src.CopyPixels(openedImagePixels, stride, 0);
             openedImage.Source = src;
+            openedImageSrc = src;
+            ReloadAutoPalette();
         }
 
         private void OpenedImage_MouseDown(object sender, MouseButtonEventArgs e)
@@ -197,6 +200,43 @@ namespace ImageToMidi
             Cursor = Cursors.Arrow;
             ((Storyboard)colPickerHint.GetValue(FadeOutStoryboard)).Begin();
             colorPick = false;
+        }
+
+        private void TrackCount_ValueChanged(object sender, RoutedPropertyChangedEventArgs<decimal> e)
+        {
+            ReloadAutoPalette();
+        }
+
+        void ReloadAutoPalette()
+        {
+            if (openedImageSrc == null) return;
+            int tracks = (int)trackCount.Value;
+            var palette = new BitmapPalette(openedImageSrc, tracks * 16);
+            autoPaletteBox.Children.Clear();
+            for (int i = 0; i < tracks; i++)
+            {
+                var dock = new Grid();
+                for (int j = 0; j < 16; j++)
+                    dock.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Star) });
+                autoPaletteBox.Children.Add(dock);
+                DockPanel.SetDock(dock, Dock.Top);
+                for (int j = 0; j < 16; j++)
+                {
+                    var box = new Viewbox()
+                    {
+                        Stretch = Stretch.Uniform,
+                        Child =
+                            new Rectangle()
+                            {
+                                Width = 40,
+                                Height = 40,
+                                Fill = new SolidColorBrush(palette.Colors[i * 16 + j])
+                            }
+                    };
+                    Grid.SetColumn(box, j);
+                    dock.Children.Add(box);
+                }
+            }
         }
     }
 }

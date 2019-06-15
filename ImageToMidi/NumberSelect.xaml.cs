@@ -36,7 +36,15 @@ namespace ImageToMidi
         { get => (decimal)GetValue(StepProperty); set => SetValue(StepProperty, value); }
         public static readonly DependencyProperty StepProperty = DependencyProperty.Register("Step", typeof(decimal), typeof(NumberSelect), new PropertyMetadata((decimal)1));
 
+        public static readonly RoutedEvent ValueChangedEvent = EventManager.RegisterRoutedEvent(
+            "ValueChanged", RoutingStrategy.Bubble,
+            typeof(RoutedPropertyChangedEventHandler<decimal>), typeof(NumberSelect));
 
+        public event RoutedPropertyChangedEventHandler<decimal> ValueChanged
+        {
+            add { AddHandler(ValueChangedEvent, value); }
+            remove { RemoveHandler(ValueChangedEvent, value); }
+        }
 
         string prevText = "";
 
@@ -44,6 +52,7 @@ namespace ImageToMidi
         {
             InitializeComponent();
 
+            this.DataContext = this;
             prevText = Value.ToString();
             textBox.Text = prevText;
         }
@@ -56,10 +65,15 @@ namespace ImageToMidi
                 decimal d = Decimal.Round(_d, DecimalPoints);
                 if (d < Minimum) d = Minimum;
                 if (d > Maximum) d = Maximum;
-                if (_d != d) textBox.Text = d.ToString();
+                if (_d != d)
+                {
+                    textBox.Text = d.ToString();
+                }
                 else
                 {
+                    var old = Value;
                     Value = d;
+                    RaiseEvent(new RoutedPropertyChangedEventArgs<decimal>(old, d, ValueChangedEvent));
                 }
             }
             catch
@@ -78,8 +92,10 @@ namespace ImageToMidi
             var d = Value + Step;
             if (d < Minimum) d = Minimum;
             if (d > Maximum) d = Maximum;
+            var old = Value;
             Value = d;
             textBox.Text = Value.ToString();
+            RaiseEvent(new RoutedPropertyChangedEventArgs<decimal>(old, d, ValueChangedEvent));
         }
 
         private void Button_Click_1(object sender, RoutedEventArgs e)
@@ -87,8 +103,10 @@ namespace ImageToMidi
             var d = Value - Step;
             if (d < Minimum) d = Minimum;
             if (d > Maximum) d = Maximum;
+            var old = Value;
             Value = d;
             textBox.Text = Value.ToString();
+            RaiseEvent(new RoutedPropertyChangedEventArgs<decimal>(old, d, ValueChangedEvent));
         }
     }
 }
