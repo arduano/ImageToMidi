@@ -36,6 +36,7 @@ namespace ImageToMidi
         int openedImageWidth = 0;
         int openedImageHeight = 0;
         string openedImagePath = "";
+        
 
         bool colorPick = false;
 
@@ -222,19 +223,22 @@ namespace ImageToMidi
                 DockPanel.SetDock(dock, Dock.Top);
                 for (int j = 0; j < 16; j++)
                 {
-                    var box = new Viewbox()
+                    if (i * 16 + j < palette.Colors.Count)
                     {
-                        Stretch = Stretch.Uniform,
-                        Child =
-                            new Rectangle()
-                            {
-                                Width = 40,
-                                Height = 40,
-                                Fill = new SolidColorBrush(palette.Colors[i * 16 + j])
-                            }
-                    };
-                    Grid.SetColumn(box, j);
-                    dock.Children.Add(box);
+                        var box = new Viewbox()
+                        {
+                            Stretch = Stretch.Uniform,
+                            Child =
+                                new Rectangle()
+                                {
+                                    Width = 40,
+                                    Height = 40,
+                                    Fill = new SolidColorBrush(palette.Colors[i * 16 + j])
+                                }
+                        };
+                        Grid.SetColumn(box, j);
+                        dock.Children.Add(box);
+                    }
                 }
             }
         }
