@@ -68,12 +68,17 @@ namespace ImageToMidi
                 if (_d != d)
                 {
                     textBox.Text = d.ToString();
+                    textBox.SelectionStart = textBox.Text.Length - 1;
                 }
                 else
                 {
                     var old = Value;
                     Value = d;
-                    RaiseEvent(new RoutedPropertyChangedEventArgs<decimal>(old, d, ValueChangedEvent));
+                    try
+                    {
+                        RaiseEvent(new RoutedPropertyChangedEventArgs<decimal>(old, d, ValueChangedEvent));
+                    }
+                    catch { }
                 }
             }
             catch

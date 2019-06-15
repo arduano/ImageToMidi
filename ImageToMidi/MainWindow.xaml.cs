@@ -256,11 +256,15 @@ namespace ImageToMidi
 
         void ReloadPreview()
         {
+            if (!IsInitialized) return;
             if (openedImage == null) return;
             if (convert != null) convert.Cancel();
             var palette = chosenPalette;
             if (leftSelected) palette = colPicker.GetPalette();
-            convert = new ConversionProcess(palette, openedImagePixels, openedImageWidth == 256);
+            if((bool)useNoteLength.IsChecked)
+            convert = new ConversionProcess(palette, openedImagePixels, openedImageWidth == 256, (bool)startOfImage.IsChecked, (int)noteSplitLength.Value);
+            else
+                convert = new ConversionProcess(palette, openedImagePixels, openedImageWidth == 256);
             convert.RunProcessAsync(ShowPreview);
             genImage.Source = null;
             saveMidi.IsEnabled = false;
@@ -307,10 +311,41 @@ namespace ImageToMidi
 
         private void SaveMidi_Click(object sender, RoutedEventArgs e)
         {
-            //ConversionProcess process = new ConversionProcess(chosenPalette, openedImagePixels, openedImageWidth == 256, false, 10);
-            //process.RunProcess();
-            //genImage.Source = process.GenerateImage();
-            //process.WriteMidi("E:\\\\imgtest.mid", (int)ticksPerPixel.Value, (int)midiPPQ.Value, true);
+            SaveFileDialog save = new SaveFileDialog();
+            save.Filter = "Midi files (*.mid)|*.mid";
+            if (!(bool)save.ShowDialog()) return;
+            try
+            {
+                if (convert != null)
+                {
+                    bool colorEvents = (bool)genColorEventsCheck.IsChecked || !leftSelected;
+                    convert.WriteMidi(save.FileName, (int)ticksPerPixel.Value, (int)midiPPQ.Value, (int)startOffset.Value, colorEvents);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString(), "An error happened");
+            }
+        }
+
+        private void NoteSplitLength_ValueChanged(object sender, RoutedPropertyChangedEventArgs<decimal> e)
+        {
+            ReloadPreview();
+        }
+
+        private void StartOfImage_Checked(object sender, RoutedEventArgs e)
+        {
+            ReloadPreview();
+        }
+
+        private void StartOfNotes_Checked(object sender, RoutedEventArgs e)
+        {
+            ReloadPreview();
+        }
+
+        private void UseNoteLength_Checked(object sender, RoutedEventArgs e)
+        {
+            ReloadPreview();
         }
     }
 }

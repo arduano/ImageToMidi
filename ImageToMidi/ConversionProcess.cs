@@ -196,7 +196,7 @@ namespace ImageToMidi
             return src;
         }
 
-        public void WriteMidi(string filename, int ticksPerPixel, int ppq, bool useColorEvents)
+        public void WriteMidi(string filename, int ticksPerPixel, int ppq, int startOffset, bool useColorEvents)
         {
             int tracks = (Palette.Colors.Count + 15 - ((Palette.Colors.Count + 15) % 16)) / 16;
             MidiWriter writer = new MidiWriter(new BufferedStream(File.Open(filename, FileMode.Create)));
@@ -215,10 +215,13 @@ namespace ImageToMidi
                             writer.Write(new ColorEvent(0, j, c.R, c.G, c.B, c.A));
                         }
 
+                uint o = (uint)startOffset;
                 foreach (MIDIEvent e in EventBuffers[i])
                 {
                     var _e = e.Clone();
                     _e.DeltaTime *= (uint)ticksPerPixel;
+                    _e.DeltaTime += o;
+                    o = 0;
                     writer.Write(_e);
                 }
                 writer.EndTrack();
