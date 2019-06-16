@@ -222,6 +222,7 @@ namespace ImageToMidi
             if (openedImageSrc == null) return;
             int tracks = (int)trackCount.Value;
             chosenPalette = new BitmapPalette(openedImageSrc, tracks * 16);
+            ReloadPalettePreview();
             ReloadPreview();
         }
 
@@ -355,7 +356,6 @@ namespace ImageToMidi
         private void ResetPalette_Click(object sender, RoutedEventArgs e)
         {
             ReloadAutoPalette();
-            ReloadPreview();
         }
 
         private void ClusterisePalette_Click(object sender, RoutedEventArgs e)

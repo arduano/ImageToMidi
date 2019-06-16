@@ -38,7 +38,8 @@
             <DockPanel LastChildFill="True" Margin="10">
                 <Button DockPanel.Dock="Top" x:Name="browseImage" Content="Browse" materialDesign:RippleAssist.RippleSizeMultiplier="2" Margin="0,0,0,15" Click="BrowseImage_Click"/>
                 <Grid Background="#37474F">
-                    <Image x:Name="openedImage" RenderOptions.BitmapScalingMode="NearestNeighbor" MouseDown="OpenedImage_MouseDown"/>
+                    <!--<Image x:Name="openedImage" RenderOptions.BitmapScalingMode="NearestNeighbor" MouseDown="OpenedImage_MouseDown"/>-->
+                    <local:ZoomableImage x:Name="openedImage"/>
                 </Grid>
             </DockPanel>
             <Grid Grid.Column="1" Margin="10">
