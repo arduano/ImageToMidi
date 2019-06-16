@@ -117,6 +117,8 @@
                         <DockPanel DockPanel.Dock="Bottom" HorizontalAlignment="Left" Margin="0,5,0,0" VerticalAlignment="Top" Height="26">
                             <Label>Track Count</Label>
                             <local:NumberSelect x:Name="trackCount" ValueChanged="TrackCount_ValueChanged" Width="80" Minimum="1" Maximum="16" Value="1"></local:NumberSelect>
+                            <Button Name="clusterisePalette" Height="Auto" Padding="0,1.5,0,0" Width="90" Margin="10,0,0,0" Click="ClusterisePalette_Click">Clusterise</Button>
+                            <Button Name="resetPalette" Height="Auto" Padding="0,1.5,0,0" Width="70" Margin="5,0,0,0" Click="ResetPalette_Click">Reset</Button>
                         </DockPanel>
                         <ScrollViewer Margin="0,40,0,0">
                             <DockPanel Name="autoPaletteBox">

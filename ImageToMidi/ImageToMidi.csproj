@@ -74,6 +74,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Clusterisation.cs" />
     <Compile Include="ColorPicker16.xaml.cs">
       <DependentUpon>ColorPicker16.xaml</DependentUpon>
     </Compile>

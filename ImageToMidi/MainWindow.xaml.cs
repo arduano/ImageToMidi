@@ -221,8 +221,14 @@ namespace ImageToMidi
         {
             if (openedImageSrc == null) return;
             int tracks = (int)trackCount.Value;
-            var palette = new BitmapPalette(openedImageSrc, tracks * 16);
+            chosenPalette = new BitmapPalette(openedImageSrc, tracks * 16);
+            ReloadPreview();
+        }
+
+        void ReloadPalettePreview()
+        {
             autoPaletteBox.Children.Clear();
+            int tracks = (chosenPalette.Colors.Count + 15 - ((chosenPalette.Colors.Count + 15) % 16)) / 16;
             for (int i = 0; i < tracks; i++)
             {
                 var dock = new Grid();
@@ -232,7 +238,7 @@ namespace ImageToMidi
                 DockPanel.SetDock(dock, Dock.Top);
                 for (int j = 0; j < 16; j++)
                 {
-                    if (i * 16 + j < palette.Colors.Count)
+                    if (i * 16 + j < chosenPalette.Colors.Count)
                     {
                         var box = new Viewbox()
                         {
@@ -242,7 +248,7 @@ namespace ImageToMidi
                                 {
                                     Width = 40,
                                     Height = 40,
-                                    Fill = new SolidColorBrush(palette.Colors[i * 16 + j])
+                                    Fill = new SolidColorBrush(chosenPalette.Colors[i * 16 + j])
                                 }
                         };
                         Grid.SetColumn(box, j);
@@ -250,19 +256,17 @@ namespace ImageToMidi
                     }
                 }
             }
-            chosenPalette = palette;
-            ReloadPreview();
         }
 
         void ReloadPreview()
         {
             if (!IsInitialized) return;
-            if (openedImage == null) return;
+            if (openedImagePixels == null) return;
             if (convert != null) convert.Cancel();
             var palette = chosenPalette;
             if (leftSelected) palette = colPicker.GetPalette();
-            if((bool)useNoteLength.IsChecked)
-            convert = new ConversionProcess(palette, openedImagePixels, openedImageWidth == 256, (bool)startOfImage.IsChecked, (int)noteSplitLength.Value);
+            if ((bool)useNoteLength.IsChecked)
+                convert = new ConversionProcess(palette, openedImagePixels, openedImageWidth == 256, (bool)startOfImage.IsChecked, (int)noteSplitLength.Value);
             else
                 convert = new ConversionProcess(palette, openedImagePixels, openedImageWidth == 256);
             convert.RunProcessAsync(ShowPreview);
@@ -345,6 +349,19 @@ namespace ImageToMidi
 
         private void UseNoteLength_Checked(object sender, RoutedEventArgs e)
         {
+            ReloadPreview();
+        }
+
+        private void ResetPalette_Click(object sender, RoutedEventArgs e)
+        {
+            ReloadAutoPalette();
+            ReloadPreview();
+        }
+
+        private void ClusterisePalette_Click(object sender, RoutedEventArgs e)
+        {
+            chosenPalette = Clusterisation.Clusterise(chosenPalette, openedImagePixels, 10);
+            ReloadPalettePreview();
             ReloadPreview();
         }
     }

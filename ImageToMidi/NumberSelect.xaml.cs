@@ -68,7 +68,7 @@ namespace ImageToMidi
                 if (_d != d)
                 {
                     textBox.Text = d.ToString();
-                    textBox.SelectionStart = textBox.Text.Length - 1;
+                    textBox.SelectionStart = textBox.Text.Length;
                 }
                 else
                 {
