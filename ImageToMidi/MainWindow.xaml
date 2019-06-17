@@ -65,36 +65,47 @@
                         <Rectangle x:Name="selectedHighlightRight" Opacity="0" Fill="{DynamicResource PrimaryHueMidBrush}"/>
                     </Grid>
                 </Grid>
-                <Grid VerticalAlignment="Bottom" Height="114">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="268*"/>
-                        <ColumnDefinition Width="217*"/>
-                    </Grid.ColumnDefinitions>
-                    <DockPanel Grid.Column="1" LastChildFill="False">
-                        <Grid DockPanel.Dock="Bottom" HorizontalAlignment="Left" Margin="0,7,0,0" VerticalAlignment="Top" Height="26">
-                            <Label>Ticks per Pixel</Label>
-                            <local:NumberSelect x:Name="ticksPerPixel" Value="5" Width="80" Minimum="1" Maximum="65535" Margin="100,0,0,0"></local:NumberSelect>
-                        </Grid>
-                        <Grid DockPanel.Dock="Bottom" HorizontalAlignment="Left" Margin="0,7,0,0" VerticalAlignment="Top" Height="26">
-                            <Label>MIDI PPQ</Label>
-                            <local:NumberSelect x:Name="midiPPQ" Value="960" Width="80" Minimum="1" Maximum="65535" Margin="100,0,0,0"></local:NumberSelect>
-                        </Grid>
-                        <Grid DockPanel.Dock="Bottom" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top" Height="26">
-                            <Label>Start Offset</Label>
-                            <local:NumberSelect x:Name="startOffset" Value="0" Width="80" Minimum="0" Maximum="999999" Margin="100,0,0,0"></local:NumberSelect>
-                        </Grid>
-                    </DockPanel>
-                    <DockPanel LastChildFill="False">
-                        <RadioButton IsEnabled="{Binding ElementName=useNoteLength, Path=IsChecked}" Name="startOfImage"  DockPanel.Dock="Bottom" Content="Start of the Image" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5,5,0,0" Checked="StartOfImage_Checked"/>
-                        <RadioButton IsChecked="True" IsEnabled="{Binding ElementName=useNoteLength, Path=IsChecked}" Name="startOfNotes" DockPanel.Dock="Bottom" Content="Start of the Notes" HorizontalAlignment="Left" Grid.Row="1" VerticalAlignment="Top" Margin="5,0,0,0" Checked="StartOfNotes_Checked"/>
-                        <Label IsEnabled="{Binding ElementName=useNoteLength, Path=IsChecked}" DockPanel.Dock="Bottom">Measure note length from...</Label>
-                        <DockPanel DockPanel.Dock="Bottom" HorizontalAlignment="Left" Margin="0,5,0,0" VerticalAlignment="Top" Height="26">
-                            <CheckBox Name="useNoteLength" Margin="0,0,0,0" Unchecked="UseNoteLength_Checked" Checked="UseNoteLength_Checked">
-                                <Label Margin="-5,-1,0,0">Maximum Note Length</Label>
-                            </CheckBox>
-                            <local:NumberSelect ValueChanged="NoteSplitLength_ValueChanged" x:Name="noteSplitLength" IsEnabled="{Binding ElementName=useNoteLength, Path=IsChecked}" Width="80" Minimum="1" Value="5" Maximum="65535" Margin="5,0,0,0"></local:NumberSelect>
+                <Grid VerticalAlignment="Bottom" Height="126">
+                    <DockPanel DockPanel.Dock="Bottom">
+                        <CheckBox DockPanel.Dock="Left" Checked="GenColorEventsCheck_Checked" Unchecked="GenColorEventsCheck_Checked" IsChecked="True" Name="genColorEventsCheck" Padding="2" VerticalAlignment="Top">
+                            <Label Padding="2" Margin="0,2,0,0">Generate Color Events</Label>
+                        </CheckBox>
+                        <DockPanel Opacity="1" Name="randomSeedBox" DockPanel.Dock="Left" Grid.Column="0" HorizontalAlignment="Left" Margin="20,1,0,0" VerticalAlignment="Top">
+                            <Label>Preview color seed</Label>
+                            <local:NumberSelect ValueChanged="FirstKeyNumber_ValueChanged" x:Name="randomColorSeed" Margin="0,0,0,0" Value="0" Minimum="0" Maximum="254" Width="70"></local:NumberSelect>
                         </DockPanel>
                     </DockPanel>
+                    <Grid VerticalAlignment="Bottom">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="268*"/>
+                            <ColumnDefinition Width="217*"/>
+                        </Grid.ColumnDefinitions>
+                        <DockPanel Grid.Column="1" LastChildFill="False">
+                            <Grid DockPanel.Dock="Bottom" HorizontalAlignment="Left" Margin="0,7,0,0" VerticalAlignment="Top" Height="26">
+                                <Label>Ticks per Pixel</Label>
+                                <local:NumberSelect x:Name="ticksPerPixel" Value="5" Width="80" Minimum="1" Maximum="65535" Margin="100,0,0,0"></local:NumberSelect>
+                            </Grid>
+                            <Grid DockPanel.Dock="Bottom" HorizontalAlignment="Left" Margin="0,7,0,0" VerticalAlignment="Top" Height="26">
+                                <Label>MIDI PPQ</Label>
+                                <local:NumberSelect x:Name="midiPPQ" Value="960" Width="80" Minimum="1" Maximum="65535" Margin="100,0,0,0"></local:NumberSelect>
+                            </Grid>
+                            <Grid DockPanel.Dock="Bottom" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top" Height="26">
+                                <Label>Start Offset</Label>
+                                <local:NumberSelect x:Name="startOffset" Value="0" Width="80" Minimum="0" Maximum="999999" Margin="100,0,0,0"></local:NumberSelect>
+                            </Grid>
+                        </DockPanel>
+                        <DockPanel LastChildFill="False">
+                            <RadioButton IsEnabled="{Binding ElementName=useNoteLength, Path=IsChecked}" Name="startOfImage"  DockPanel.Dock="Bottom" Content="Start of the Image" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5,5,0,0" Checked="StartOfImage_Checked"/>
+                            <RadioButton IsChecked="True" IsEnabled="{Binding ElementName=useNoteLength, Path=IsChecked}" Name="startOfNotes" DockPanel.Dock="Bottom" Content="Start of the Notes" HorizontalAlignment="Left" Grid.Row="1" VerticalAlignment="Top" Margin="5,0,0,0" Checked="StartOfNotes_Checked"/>
+                            <Label IsEnabled="{Binding ElementName=useNoteLength, Path=IsChecked}" DockPanel.Dock="Bottom">Measure note length from...</Label>
+                            <DockPanel DockPanel.Dock="Bottom" HorizontalAlignment="Left" Margin="0,5,0,0" VerticalAlignment="Top" Height="26">
+                                <CheckBox Name="useNoteLength" Margin="0,0,0,0" Unchecked="UseNoteLength_Checked" Checked="UseNoteLength_Checked">
+                                    <Label Margin="-5,-1,0,0">Maximum Note Length</Label>
+                                </CheckBox>
+                                <local:NumberSelect ValueChanged="NoteSplitLength_ValueChanged" x:Name="noteSplitLength" IsEnabled="{Binding ElementName=useNoteLength, Path=IsChecked}" Width="80" Minimum="1" Value="5" Maximum="65535" Margin="5,0,0,0"></local:NumberSelect>
+                            </DockPanel>
+                        </DockPanel>
+                    </Grid>
                 </Grid>
             </Grid>
             <DockPanel LastChildFill="True" Margin="10" Grid.Column="2">
@@ -117,22 +128,13 @@
                     <local:ZoomableImage x:Name="genImage"/>
                 </Grid>
             </DockPanel>
-            <TabControl Name="tabSelect" Grid.Column="1" Background="Transparent" BorderBrush="Transparent" Margin="0,76,0,110" VerticalAlignment="Top">
+            <TabControl Name="tabSelect" Grid.Column="1" Background="Transparent" BorderBrush="Transparent" Margin="0,76,0,145" VerticalAlignment="Top">
                 <TabItem Opacity="0">
                     <DockPanel LastChildFill="False" Margin="10,10,10,0" VerticalAlignment="Top">
                         <Viewbox DockPanel.Dock="Top" Stretch="Uniform">
                             <local:ColorPicker16 x:Name="colPicker" Width="Auto" Height="Auto" Grid.ColumnSpan="2" Grid.Row="1" VerticalAlignment="Top"/>
                         </Viewbox>
                         <Label DockPanel.Dock="Top" Name="colPickerHint" Opacity="0" Content="Click the image on the left to pick a color"></Label>
-                        <DockPanel>
-                            <CheckBox DockPanel.Dock="Top" Checked="GenColorEventsCheck_Checked" Unchecked="GenColorEventsCheck_Checked" IsChecked="True" Name="genColorEventsCheck" Padding="2">
-                                <Label Padding="2" Margin="0,2,0,0">Generate Color Events</Label>
-                            </CheckBox>
-                            <DockPanel Opacity="0" Name="randomSeedBox" DockPanel.Dock="Top" Grid.Column="0" HorizontalAlignment="Left" Margin="0,10,0,0">
-                                <Label>Preview color seed</Label>
-                                <local:NumberSelect ValueChanged="FirstKeyNumber_ValueChanged" x:Name="randomColorSeed" Margin="5,0,0,0" Value="0" Minimum="0" Maximum="254" Width="70"></local:NumberSelect>
-                            </DockPanel>
-                        </DockPanel>
                     </DockPanel>
                 </TabItem>
                 <TabItem Opacity="0">

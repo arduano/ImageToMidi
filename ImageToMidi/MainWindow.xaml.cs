@@ -330,7 +330,7 @@ namespace ImageToMidi
             {
                 if (convert != null)
                 {
-                    bool colorEvents = (bool)genColorEventsCheck.IsChecked || !leftSelected;
+                    bool colorEvents = (bool)genColorEventsCheck.IsChecked;
                     convert.WriteMidi(save.FileName, (int)ticksPerPixel.Value, (int)midiPPQ.Value, (int)startOffset.Value, colorEvents);
                 }
             }
