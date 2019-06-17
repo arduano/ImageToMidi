@@ -153,7 +153,7 @@ namespace ImageToMidi
             }
             else
             {
-                width = container.ActualHeight / aspect;
+                width = container.ActualHeight * aspect;
                 height = container.ActualHeight;
             }
             var zoom = Zoom;
@@ -186,7 +186,7 @@ namespace ImageToMidi
             }
             else
             {
-                width = container.ActualHeight / aspect;
+                width = container.ActualHeight * aspect;
                 height = container.ActualHeight;
             }
             var pos = Mouse.GetPosition(container);
@@ -285,7 +285,7 @@ namespace ImageToMidi
                     }
                     else
                     {
-                        width = container.ActualHeight / aspect;
+                        width = container.ActualHeight * aspect;
                         height = container.ActualHeight;
                     }
                     var pos = Mouse.GetPosition(container);

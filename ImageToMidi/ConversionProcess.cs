@@ -23,6 +23,9 @@ namespace ImageToMidi
         bool measureFromStart;
         bool useMaxNoteLength = false;
 
+        public bool RandomColors = false;
+        public int RandomColorSeed = 0;
+
         int startKey;
         int endKey;
 
@@ -67,79 +70,10 @@ namespace ImageToMidi
         {
             return Task.Run(() =>
             {
-                MakeResizedImage();
+                resizedImage = ResizeImage.MakeResizedImage(imageData, imageStride, endKey - startKey);
                 RunProcess();
                 Image = GenerateImage();
                 if (!cancelled) callback();
-            });
-        }
-
-        void MakeResizedImage()
-        {
-            int W = imageStride / 4;
-            int H = imageData.Length / imageStride;
-            int newW = endKey - startKey;
-            int newH = (int)((double)H / W * newW);
-
-            resizedImage = new byte[newW * newH * 4];
-
-            double relativeScale = 1 / 1;
-            double relativePixelScale = relativeScale / newW * W;
-
-            double left = 0;//(x2 - x1) * z1 / 5 * Size1 + Size1 / 2.0 - Size1 * relativeScale / 2.0;
-            double top = 0;//(y2 - y1) * z1 / 5 * Size1 + Size1 / 2.0 - Size1 * relativeScale / 2.0;
-
-            double divisor = 1 / relativeScale / relativeScale / W * newW / W * newW;
-
-            Parallel.For(0, newW * newH, p =>
-            {
-                int x = p % newW;
-                int y = (p - x) / newW;
-
-                int x4 = x * 4;
-                double pixelx = left + x * relativePixelScale;
-                double pixely = top + y * relativePixelScale;
-
-                double pixelx2 = pixelx + relativePixelScale;
-                double pixely2 = pixely + relativePixelScale;
-
-                int startx = (int)Math.Floor(pixelx);
-                int starty = (int)Math.Floor(pixely);
-                int endx = (int)Math.Floor(pixelx2);
-                int endy = (int)Math.Floor(pixely2);
-
-                if (pixelx2 == Math.Floor(pixelx2)) endx--;
-                if (pixely2 == Math.Floor(pixely2)) endy--;
-
-                {
-                    double r = 0;
-                    double g = 0;
-                    double b = 0;
-                    double a = 0;
-                    for (int i = startx; i <= endx; i++)
-                    {
-                        int i4 = i * 4;
-                        for (int j = starty; j <= endy; j++)
-                        {
-                            if (i < 0 || i >= W || j < 0 || j >= W) continue;
-                            double footprintWidth = Math.Max(i, pixelx) - Math.Min(i + 1, pixelx2);
-                            double footprintHeight = Math.Max(j, pixely) - Math.Min(j + 1, pixely2);
-
-                            double effect = footprintHeight * footprintWidth * divisor;
-
-                            int I1index = i4 + j * W * 4;
-                            r += imageData[I1index] * effect;
-                            g += imageData[I1index + 1] * effect;
-                            b += imageData[I1index + 2] * effect;
-                            a += imageData[I1index + 3] * effect;
-                        }
-                    }
-                    int I2index = x4 + y * newW * 4;
-                    resizedImage[I2index] = (byte)r;
-                    resizedImage[I2index + 1] = (byte)g;
-                    resizedImage[I2index + 2] = (byte)b;
-                    resizedImage[I2index + 3] = (byte)a;
-                }
             });
         }
 
@@ -251,7 +185,15 @@ namespace ImageToMidi
                     foreach (Note n in new ExtractNotes(EventBuffers[i]))
                     {
                         var c = Palette.Colors[i * 16 + n.Channel];
-                        var _c = System.Drawing.Color.FromArgb(c.A, c.R, c.G, c.B);
+                        System.Drawing.Color _c;
+                        if (RandomColors)
+                        {
+                            int r, g, b;
+                            Random rand = new Random(i * 16 + n.Channel + RandomColorSeed * 256);
+                            HsvToRgb(rand.NextDouble() * 360, 1, 0.5, out r, out g, out b);
+                            _c = System.Drawing.Color.FromArgb(255, r, g, b);
+                        }
+                        else _c = System.Drawing.Color.FromArgb(c.A, c.R, c.G, c.B);
                         using (var brush = new System.Drawing.SolidBrush(_c))
                             dg.FillRectangle(brush, (n.Key - startKey) * scale, height * scale - (int)n.End * scale, scale, (int)n.Length * scale);
                         using (var pen = new System.Drawing.Pen(System.Drawing.Color.Black))
@@ -297,6 +239,91 @@ namespace ImageToMidi
                 writer.EndTrack();
             }
             writer.Close();
+        }
+
+
+        void HsvToRgb(double h, double S, double V, out int r, out int g, out int b)
+        {
+            double H = h;
+            while (H < 0) { H += 360; };
+            while (H >= 360) { H -= 360; };
+            double R, G, B;
+            if (V <= 0)
+            { R = G = B = 0; }
+            else if (S <= 0)
+            {
+                R = G = B = V;
+            }
+            else
+            {
+                double hf = H / 60.0;
+                int i = (int)Math.Floor(hf);
+                double f = hf - i;
+                double pv = V * (1 - S);
+                double qv = V * (1 - S * f);
+                double tv = V * (1 - S * (1 - f));
+                switch (i)
+                {
+                    case 0:
+                        R = V;
+                        G = tv;
+                        B = pv;
+                        break;
+
+                    case 1:
+                        R = qv;
+                        G = V;
+                        B = pv;
+                        break;
+                    case 2:
+                        R = pv;
+                        G = V;
+                        B = tv;
+                        break;
+
+                    case 3:
+                        R = pv;
+                        G = qv;
+                        B = V;
+                        break;
+                    case 4:
+                        R = tv;
+                        G = pv;
+                        B = V;
+                        break;
+
+                    case 5:
+                        R = V;
+                        G = pv;
+                        B = qv;
+                        break;
+
+                    case 6:
+                        R = V;
+                        G = tv;
+                        B = pv;
+                        break;
+                    case -1:
+                        R = V;
+                        G = pv;
+                        B = qv;
+                        break;
+
+                    default:
+                        R = G = B = V; 
+                        break;
+                }
+            }
+            r = Clamp((int)(R * 255.0));
+            g = Clamp((int)(G * 255.0));
+            b = Clamp((int)(B * 255.0));
+        }
+
+        int Clamp(int i)
+        {
+            if (i < 0) return 0;
+            if (i > 255) return 255;
+            return i;
         }
     }
 }

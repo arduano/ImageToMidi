@@ -95,6 +95,7 @@ namespace ImageToMidi
             MakeFadeInOut(colPickerHint);
             MakeFadeInOut(openedImage);
             MakeFadeInOut(genImage);
+            MakeFadeInOut(randomSeedBox);
 
             colPicker.PickStart += ColPicker_PickStart;
             colPicker.PickStop += ColPicker_PickStop;
@@ -271,6 +272,11 @@ namespace ImageToMidi
                 convert = new ConversionProcess(palette, openedImagePixels, openedImageWidth * 4, (int)firstKeyNumber.Value, (int)lastKeyNumber.Value + 1, (bool)startOfImage.IsChecked, (int)noteSplitLength.Value);
             else
                 convert = new ConversionProcess(palette, openedImagePixels, openedImageWidth * 4, (int)firstKeyNumber.Value, (int)lastKeyNumber.Value + 1);
+            if (!(bool)genColorEventsCheck.IsChecked)
+            {
+                convert.RandomColors = true;
+                convert.RandomColorSeed = (int)randomColorSeed.Value;
+            }
             convert.RunProcessAsync(ShowPreview);
             genImage.Source = null;
             saveMidi.IsEnabled = false;
@@ -362,7 +368,11 @@ namespace ImageToMidi
         private void ClusterisePalette_Click(object sender, RoutedEventArgs e)
         {
             if (chosenPalette == null || openedImagePixels == null) return;
-            chosenPalette = Clusterisation.Clusterise(chosenPalette, openedImagePixels, 10);
+            chosenPalette =
+                Clusterisation.Clusterise(
+                    chosenPalette,
+                    ResizeImage.MakeResizedImage(openedImagePixels, openedImageWidth * 4, 128),
+                    10);
             ReloadPalettePreview();
             ReloadPreview();
         }
@@ -383,6 +393,16 @@ namespace ImageToMidi
         {
             firstKeyNumber.Maximum = lastKeyNumber.Value - 1;
             ReloadPreview();
+        }
+
+        private void GenColorEventsCheck_Checked(object sender, RoutedEventArgs e)
+        {
+            if (!IsInitialized) return;
+            ReloadPreview();
+            if ((bool)genColorEventsCheck.IsChecked)
+                ((Storyboard)randomSeedBox.GetValue(FadeOutStoryboard)).Begin();
+            else
+                ((Storyboard)randomSeedBox.GetValue(FadeInStoryboard)).Begin();
         }
     }
 }

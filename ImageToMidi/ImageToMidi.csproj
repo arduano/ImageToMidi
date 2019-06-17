@@ -71,6 +71,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ResizeImage.cs" />
     <Compile Include="ZoomableImage.xaml.cs">
       <DependentUpon>ZoomableImage.xaml</DependentUpon>
     </Compile>
