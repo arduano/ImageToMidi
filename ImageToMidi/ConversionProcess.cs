@@ -17,41 +17,44 @@ namespace ImageToMidi
     {
         BitmapPalette Palette;
         byte[] imageData;
-        bool size256;
+        int imageStride;
         bool cancelled = false;
         int maxNoteLength;
         bool measureFromStart;
         bool useMaxNoteLength = false;
 
-        int eventCount = 0;
+        int startKey;
+        int endKey;
+
+        byte[] resizedImage;
 
         public Bitmap Image { get; private set; }
 
         FastList<MIDIEvent>[] EventBuffers;
 
-        byte[] rawColors;
-
-        public ConversionProcess(BitmapPalette palette, byte[] imageData, bool size256)
+        public ConversionProcess(BitmapPalette palette, byte[] imageData, int imgStride, int startKey, int endKey)
         {
             Palette = palette;
             this.imageData = imageData;
-            this.size256 = size256;
-            rawColors = new byte[imageData.Length / 4];
             int colors = palette.Colors.Count + 15;
             int tracks = (colors - (colors % 16)) / 16;
+            this.startKey = startKey;
+            this.endKey = endKey;
+            imageStride = imgStride;
             EventBuffers = new FastList<MIDIEvent>[tracks];
             for (int i = 0; i < tracks; i++)
                 EventBuffers[i] = new FastList<MIDIEvent>();
         }
 
-        public ConversionProcess(BitmapPalette palette, byte[] imageData, bool size256, bool measureFromStart, int maxNoteLength)
+        public ConversionProcess(BitmapPalette palette, byte[] imageData, int imgStride, int startKey, int endKey, bool measureFromStart, int maxNoteLength)
         {
             Palette = palette;
             this.imageData = imageData;
-            this.size256 = size256;
-            rawColors = new byte[imageData.Length / 4];
             int colors = palette.Colors.Count + 15;
             int tracks = (colors - (colors % 16)) / 16;
+            this.startKey = startKey;
+            this.endKey = endKey;
+            imageStride = imgStride;
             EventBuffers = new FastList<MIDIEvent>[tracks];
             for (int i = 0; i < tracks; i++)
                 EventBuffers[i] = new FastList<MIDIEvent>();
@@ -64,9 +67,79 @@ namespace ImageToMidi
         {
             return Task.Run(() =>
             {
+                MakeResizedImage();
                 RunProcess();
                 Image = GenerateImage();
                 if (!cancelled) callback();
+            });
+        }
+
+        void MakeResizedImage()
+        {
+            int W = imageStride / 4;
+            int H = imageData.Length / imageStride;
+            int newW = endKey - startKey;
+            int newH = (int)((double)H / W * newW);
+
+            resizedImage = new byte[newW * newH * 4];
+
+            double relativeScale = 1 / 1;
+            double relativePixelScale = relativeScale / newW * W;
+
+            double left = 0;//(x2 - x1) * z1 / 5 * Size1 + Size1 / 2.0 - Size1 * relativeScale / 2.0;
+            double top = 0;//(y2 - y1) * z1 / 5 * Size1 + Size1 / 2.0 - Size1 * relativeScale / 2.0;
+
+            double divisor = 1 / relativeScale / relativeScale / W * newW / W * newW;
+
+            Parallel.For(0, newW * newH, p =>
+            {
+                int x = p % newW;
+                int y = (p - x) / newW;
+
+                int x4 = x * 4;
+                double pixelx = left + x * relativePixelScale;
+                double pixely = top + y * relativePixelScale;
+
+                double pixelx2 = pixelx + relativePixelScale;
+                double pixely2 = pixely + relativePixelScale;
+
+                int startx = (int)Math.Floor(pixelx);
+                int starty = (int)Math.Floor(pixely);
+                int endx = (int)Math.Floor(pixelx2);
+                int endy = (int)Math.Floor(pixely2);
+
+                if (pixelx2 == Math.Floor(pixelx2)) endx--;
+                if (pixely2 == Math.Floor(pixely2)) endy--;
+
+                {
+                    double r = 0;
+                    double g = 0;
+                    double b = 0;
+                    double a = 0;
+                    for (int i = startx; i <= endx; i++)
+                    {
+                        int i4 = i * 4;
+                        for (int j = starty; j <= endy; j++)
+                        {
+                            if (i < 0 || i >= W || j < 0 || j >= W) continue;
+                            double footprintWidth = Math.Max(i, pixelx) - Math.Min(i + 1, pixelx2);
+                            double footprintHeight = Math.Max(j, pixely) - Math.Min(j + 1, pixely2);
+
+                            double effect = footprintHeight * footprintWidth * divisor;
+
+                            int I1index = i4 + j * W * 4;
+                            r += imageData[I1index] * effect;
+                            g += imageData[I1index + 1] * effect;
+                            b += imageData[I1index + 2] * effect;
+                            a += imageData[I1index + 3] * effect;
+                        }
+                    }
+                    int I2index = x4 + y * newW * 4;
+                    resizedImage[I2index] = (byte)r;
+                    resizedImage[I2index + 1] = (byte)g;
+                    resizedImage[I2index + 2] = (byte)b;
+                    resizedImage[I2index + 3] = (byte)a;
+                }
             });
         }
 
@@ -104,8 +177,8 @@ namespace ImageToMidi
 
         public void RunProcess()
         {
-            int width = size256 ? 256 : 128;
-            int height = imageData.Length / 4 / width;
+            int width = endKey - startKey;
+            int height = resizedImage.Length / 4 / width;
             int tracks = (Palette.Colors.Count + 15 - ((Palette.Colors.Count + 15) % 16)) / 16;
             long[] lastTimes = new long[tracks];
             long[] lastOnTimes = new long[width];
@@ -118,8 +191,8 @@ namespace ImageToMidi
                 {
                     int pixel = (i * width + j) * 4;
                     int c = colors[j];
-                    int newc = GetColorID(imageData[pixel + 2], imageData[pixel + 1], imageData[pixel + 0]);
-                    if (imageData[pixel + 3] < 128) newc = -2;
+                    int newc = GetColorID(resizedImage[pixel + 2], resizedImage[pixel + 1], resizedImage[pixel + 0]);
+                    if (resizedImage[pixel + 3] < 128) newc = -2;
                     bool newNote = false;
                     if (useMaxNoteLength)
                     {
@@ -133,8 +206,7 @@ namespace ImageToMidi
                         {
                             channel = c % 16;
                             track = (c - channel) / 16;
-                            EventBuffers[track].Add(new NoteOffEvent((uint)(time - lastTimes[track]), (byte)channel, (byte)j));
-                            eventCount++;
+                            EventBuffers[track].Add(new NoteOffEvent((uint)(time - lastTimes[track]), (byte)channel, (byte)(j + startKey)));
                             lastTimes[track] = time;
                         }
                         colors[j] = newc;
@@ -143,8 +215,7 @@ namespace ImageToMidi
                         {
                             channel = c % 16;
                             track = (c - channel) / 16;
-                            EventBuffers[track].Add(new NoteOnEvent((uint)(time - lastTimes[track]), (byte)channel, (byte)j, 1));
-                            eventCount++;
+                            EventBuffers[track].Add(new NoteOnEvent((uint)(time - lastTimes[track]), (byte)channel, (byte)(j + startKey), 1));
                             lastTimes[track] = time;
                             lastOnTimes[j] = time;
                         }
@@ -160,8 +231,7 @@ namespace ImageToMidi
                 {
                     int channel = c % 16;
                     int track = (c - channel) / 16;
-                    EventBuffers[track].Add(new NoteOffEvent((uint)(time - lastTimes[track]), (byte)channel, (byte)j));
-                    eventCount++;
+                    EventBuffers[track].Add(new NoteOffEvent((uint)(time - lastTimes[track]), (byte)channel, (byte)(j + startKey)));
                     lastTimes[track] = time;
                 }
             }
@@ -170,8 +240,8 @@ namespace ImageToMidi
 
         public Bitmap GenerateImage()
         {
-            int width = size256 ? 256 : 128;
-            int height = imageData.Length / 4 / width;
+            int width = endKey - startKey;
+            int height = resizedImage.Length / 4 / width;
             int scale = 5;
             Bitmap img = new Bitmap(width * scale + 1, height * scale + 1, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
             using (Graphics dg = Graphics.FromImage(img))
@@ -183,9 +253,9 @@ namespace ImageToMidi
                         var c = Palette.Colors[i * 16 + n.Channel];
                         var _c = System.Drawing.Color.FromArgb(c.A, c.R, c.G, c.B);
                         using (var brush = new System.Drawing.SolidBrush(_c))
-                            dg.FillRectangle(brush, n.Key * scale, height * scale - (int)n.End * scale, scale, (int)n.Length * scale);
+                            dg.FillRectangle(brush, (n.Key - startKey) * scale, height * scale - (int)n.End * scale, scale, (int)n.Length * scale);
                         using (var pen = new System.Drawing.Pen(System.Drawing.Color.Black))
-                            dg.DrawRectangle(pen, n.Key * scale, height * scale - (int)n.End * scale, scale, (int)n.Length * scale);
+                            dg.DrawRectangle(pen, (n.Key - startKey) * scale, height * scale - (int)n.End * scale, scale, (int)n.Length * scale);
                         if (cancelled) break;
                     }
                     if (cancelled) break;
@@ -211,7 +281,7 @@ namespace ImageToMidi
                     for (byte j = 0; j < 16; j++)
                         if (i * 16 + j < Palette.Colors.Count)
                         {
-                            var c = Palette.Colors[j];
+                            var c = Palette.Colors[i * 16 + j];
                             writer.Write(new ColorEvent(0, j, c.R, c.G, c.B, c.A));
                         }
 

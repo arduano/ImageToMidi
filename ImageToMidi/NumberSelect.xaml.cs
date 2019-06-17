@@ -22,16 +22,16 @@ namespace ImageToMidi
     {
         public decimal Value
         { get => (decimal)GetValue(ValueProperty); set => SetValue(ValueProperty, value); }
-        public static readonly DependencyProperty ValueProperty = DependencyProperty.Register("Value", typeof(decimal), typeof(NumberSelect), new PropertyMetadata((decimal)0));
+        public static readonly DependencyProperty ValueProperty = DependencyProperty.Register("Value", typeof(decimal), typeof(NumberSelect), new PropertyMetadata((decimal)0, new PropertyChangedCallback(OnPropertyChange)));
         public int DecimalPoints
         { get => (int)GetValue(DecimalPointsProperty); set => SetValue(DecimalPointsProperty, value); }
-        public static readonly DependencyProperty DecimalPointsProperty = DependencyProperty.Register("DecimalPoints", typeof(int), typeof(NumberSelect), new PropertyMetadata((int)0));
+        public static readonly DependencyProperty DecimalPointsProperty = DependencyProperty.Register("DecimalPoints", typeof(int), typeof(NumberSelect), new PropertyMetadata((int)0, new PropertyChangedCallback(OnPropertyChange)));
         public decimal Minimum
         { get => (decimal)GetValue(MinimumProperty); set => SetValue(MinimumProperty, value); }
-        public static readonly DependencyProperty MinimumProperty = DependencyProperty.Register("Minimum", typeof(decimal), typeof(NumberSelect), new PropertyMetadata((decimal)0));
+        public static readonly DependencyProperty MinimumProperty = DependencyProperty.Register("Minimum", typeof(decimal), typeof(NumberSelect), new PropertyMetadata((decimal)0, new PropertyChangedCallback(OnPropertyChange)));
         public decimal Maximum
         { get => (decimal)GetValue(MaximumProperty); set => SetValue(MaximumProperty, value); }
-        public static readonly DependencyProperty MaximumProperty = DependencyProperty.Register("Maximum", typeof(decimal), typeof(NumberSelect), new PropertyMetadata((decimal)1000));
+        public static readonly DependencyProperty MaximumProperty = DependencyProperty.Register("Maximum", typeof(decimal), typeof(NumberSelect), new PropertyMetadata((decimal)1000, new PropertyChangedCallback(OnPropertyChange)));
         public decimal Step
         { get => (decimal)GetValue(StepProperty); set => SetValue(StepProperty, value); }
         public static readonly DependencyProperty StepProperty = DependencyProperty.Register("Step", typeof(decimal), typeof(NumberSelect), new PropertyMetadata((decimal)1));
@@ -46,6 +46,11 @@ namespace ImageToMidi
             remove { RemoveHandler(ValueChangedEvent, value); }
         }
 
+        private static void OnPropertyChange(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+        {
+            ((NumberSelect)sender).UpdateValue();
+        }
+
         string prevText = "";
 
         public NumberSelect()
@@ -55,6 +60,15 @@ namespace ImageToMidi
             this.DataContext = this;
             prevText = Value.ToString();
             textBox.Text = prevText;
+        }
+
+        void UpdateValue()
+        {
+            var d = Value;
+            d = Decimal.Round(d, DecimalPoints);
+            if (d < Minimum) d = Minimum;
+            if (d > Maximum) d = Maximum;
+            if (d != Value) Value = d;
         }
 
         private void TextBox_TextChanged(object sender, TextChangedEventArgs e)

@@ -7,6 +7,6 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid MouseDown="Container_MouseDown" MouseMove="Container_MouseMove" MouseUp="Container_MouseUp" SizeChanged="Container_SizeChanged" ClipToBounds="True" Background="Transparent" Name="container" MouseWheel="Container_MouseWheel">
-        <Image MouseDown="Container_MouseDown" MouseMove="Container_MouseMove" MouseUp="Container_MouseUp" MouseWheel="Container_MouseWheel" Name="shownImage" HorizontalAlignment="Left" VerticalAlignment="Top"></Image> 
+        <Image RenderOptions.BitmapScalingMode="{Binding ScalingMode}" MouseDown="Container_MouseDown" MouseMove="Container_MouseMove" MouseUp="Container_MouseUp" MouseWheel="Container_MouseWheel" Name="shownImage" HorizontalAlignment="Left" VerticalAlignment="Top"></Image> 
     </Grid>
 </UserControl>

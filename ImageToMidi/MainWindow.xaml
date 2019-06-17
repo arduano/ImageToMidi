@@ -14,14 +14,18 @@
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="{DynamicResource MaterialDesignFont}"
         Title="Image To MIDI" Height="496" Width="1186" WindowStyle="None">
+    <Window.Resources>
+        <BitmapImage x:Key="Icon" UriSource="i2m.png" />
+    </Window.Resources>
     <WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="{Binding ActualHeight,ElementName=titlebar}"/>
     </WindowChrome.WindowChrome>
     <DockPanel Name="windowContent" LastChildFill="True">
         <Border Background="#37474F" DockPanel.Dock="Top" Height="50" x:Name="titlebar">
             <DockPanel>
+                <Image materialDesign:ShadowAssist.ShadowDepth="Depth4" HorizontalAlignment="Center" Width="40" Height="Auto" Margin="5" Source="i2m.png"/>
                 <TextBlock Text="{Binding Title, RelativeSource={RelativeSource FindAncestor,AncestorType=Window},FallbackValue=Image To MIDI}" 
-                           Margin="10,0,0,0" DockPanel.Dock="Left"
+                           Margin="5,0,0,0" DockPanel.Dock="Left"
                            VerticalAlignment="Center" FontSize="20"/>
                 <DockPanel DockPanel.Dock="Right" HorizontalAlignment="Right" Margin="0,0,10,0">
                     <Button Name="ExitButton" Background="Red" Width="20" Height="20" Margin="3" DockPanel.Dock="Right" WindowChrome.IsHitTestVisibleInChrome="True" Click="ExitButton_Click"></Button>
@@ -39,7 +43,7 @@
                 <Button DockPanel.Dock="Top" x:Name="browseImage" Content="Browse" materialDesign:RippleAssist.RippleSizeMultiplier="2" Margin="0,0,0,15" Click="BrowseImage_Click"/>
                 <Grid Background="#37474F">
                     <!--<Image x:Name="openedImage" RenderOptions.BitmapScalingMode="NearestNeighbor" MouseDown="OpenedImage_MouseDown"/>-->
-                    <local:ZoomableImage x:Name="openedImage"/>
+                    <local:ZoomableImage ClickableColors="True" ColorClicked="OpenedImage_ColorClicked" ScalingMode="NearestNeighbor" x:Name="openedImage"/>
                 </Grid>
             </DockPanel>
             <Grid Grid.Column="1" Margin="10">
@@ -85,7 +89,7 @@
                         <RadioButton IsChecked="True" IsEnabled="{Binding ElementName=useNoteLength, Path=IsChecked}" Name="startOfNotes" DockPanel.Dock="Bottom" Content="Start of the Notes" HorizontalAlignment="Left" Grid.Row="1" VerticalAlignment="Top" Margin="5,0,0,0" Checked="StartOfNotes_Checked"/>
                         <Label IsEnabled="{Binding ElementName=useNoteLength, Path=IsChecked}" DockPanel.Dock="Bottom">Measure note length from...</Label>
                         <DockPanel DockPanel.Dock="Bottom" HorizontalAlignment="Left" Margin="0,5,0,0" VerticalAlignment="Top" Height="26">
-                            <CheckBox Name="useNoteLength" Margin="0,0,0,0" Checked="UseNoteLength_Checked">
+                            <CheckBox Name="useNoteLength" Margin="0,0,0,0" Unchecked="UseNoteLength_Checked" Checked="UseNoteLength_Checked">
                                 <Label Margin="-5,-1,0,0">Maximum Note Length</Label>
                             </CheckBox>
                             <local:NumberSelect ValueChanged="NoteSplitLength_ValueChanged" x:Name="noteSplitLength" IsEnabled="{Binding ElementName=useNoteLength, Path=IsChecked}" Width="80" Minimum="1" Value="5" Maximum="65535" Margin="5,0,0,0"></local:NumberSelect>
@@ -95,8 +99,22 @@
             </Grid>
             <DockPanel LastChildFill="True" Margin="10" Grid.Column="2">
                 <Button IsEnabled="False" ClipToBounds="True" Content="Export MIDI" Padding="0" DockPanel.Dock="Bottom" x:Name="saveMidi" materialDesign:RippleAssist.RippleSizeMultiplier="2" Margin="0,15,0,0" Click="SaveMidi_Click"/>
+                <Grid Margin="0,0,0,10" DockPanel.Dock="Top">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+                    <DockPanel Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,0,0,0">
+                        <Label>First Key</Label>
+                        <local:NumberSelect ValueChanged="FirstKeyNumber_ValueChanged" x:Name="firstKeyNumber" Margin="5,0,0,0" Value="0" Minimum="0" Maximum="255" Width="70"></local:NumberSelect>
+                    </DockPanel>
+                    <DockPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,0,0,0">
+                        <Label>Last Key</Label>
+                        <local:NumberSelect ValueChanged="LastKeyNumber_ValueChanged" x:Name="lastKeyNumber" Margin="5,0,0,0" Value="127" Minimum="0" Maximum="127" Width="70"></local:NumberSelect>
+                    </DockPanel>
+                </Grid>
                 <Grid Background="#37474F">
-                    <Image x:Name="genImage" RenderOptions.BitmapScalingMode="NearestNeighbor" MouseDown="OpenedImage_MouseDown"/>
+                    <local:ZoomableImage x:Name="genImage"/>
                 </Grid>
             </DockPanel>
             <TabControl Name="tabSelect" Grid.Column="1" Background="Transparent" BorderBrush="Transparent" Margin="0,76,0,110" VerticalAlignment="Top">

@@ -103,6 +103,11 @@ namespace ImageToMidi
 
         private void ExitButton_Click(object sender, RoutedEventArgs e)
         {
+            if (WindowState == WindowState.Maximized)
+            {
+                Close();
+                return;
+            }
             double start = windowContent.ActualWidth;
             windowContent.Width = start;
             for (double i = 1; i > 0; i -= 0.05)
@@ -152,11 +157,6 @@ namespace ImageToMidi
             src.EndInit();
             openedImageWidth = src.PixelWidth;
             openedImageHeight = src.PixelHeight;
-            if (openedImageWidth != 128 && openedImageWidth != 256)
-            {
-                MessageBox.Show("The image must be either 128 or 256 pixels wide\n(For midi keyboard)", "Incorrect format");
-                return;
-            }
             int stride = src.PixelWidth * 4;
             int size = src.PixelHeight * stride;
             openedImagePixels = new byte[size];
@@ -167,35 +167,36 @@ namespace ImageToMidi
             ((Storyboard)openedImage.GetValue(FadeInStoryboard)).Begin();
         }
 
-        private void OpenedImage_MouseDown(object sender, MouseButtonEventArgs e)
-        {
-            if (!colorPick)
-            {
-                if (openedImagePath == "") return;
-                Process imageView = new Process();
-                imageView.StartInfo.FileName = openedImagePath;
-                imageView.Start();
-            }
-            else
-            {
-                var pos = e.GetPosition(openedImage);
-                int x = (int)Math.Round(pos.X / openedImage.ActualWidth * openedImageWidth);
-                int y = (int)Math.Round(pos.Y / openedImage.ActualHeight * openedImageHeight);
-                if (x < 0) x = 0;
-                if (x >= openedImageWidth) x = openedImageWidth - 1;
-                if (y < 0) y = 0;
-                if (y >= openedImageHeight) y = openedImageHeight - 1;
-
-                int s = openedImageWidth * 4;
-
-                Color c = Color.FromArgb(255, openedImagePixels[s * y + x * 4 + 2], openedImagePixels[s * y + x * 4 + 1], openedImagePixels[s * y + x * 4 + 0]);
-                colPicker.SendColor(c);
-            }
-        }
-
         private void MinimiseButton_Click(object sender, RoutedEventArgs e)
         {
+            if (WindowState == WindowState.Maximized)
+            {
+                WindowState = WindowState.Minimized;
+                return;
+            }
+            double start = windowContent.ActualHeight;
+            double startpos = Top;
+            windowContent.Height = start;
+            for (double i = 1; i > 0; i -= 0.08)
+            {
+                double smooth;
+                double strength = 10;
+                if (i < 0.5f)
+                {
+                    smooth = Math.Pow(i * 2, strength) / 2;
+                }
+                else
+                {
+                    smooth = 1 - Math.Pow((1 - i) * 2, strength) / 2;
+                }
+                Height = start * smooth;
+                Top = startpos + start * (1 - smooth);
+                Thread.Sleep(1000 / 60);
+            }
             WindowState = WindowState.Minimized;
+            windowContent.Height = double.NaN;
+            Height = start;
+            Top = startpos;
         }
 
         private void ColPicker_PickStart()
@@ -267,9 +268,9 @@ namespace ImageToMidi
             var palette = chosenPalette;
             if (leftSelected) palette = colPicker.GetPalette();
             if ((bool)useNoteLength.IsChecked)
-                convert = new ConversionProcess(palette, openedImagePixels, openedImageWidth == 256, (bool)startOfImage.IsChecked, (int)noteSplitLength.Value);
+                convert = new ConversionProcess(palette, openedImagePixels, openedImageWidth * 4, (int)firstKeyNumber.Value, (int)lastKeyNumber.Value + 1, (bool)startOfImage.IsChecked, (int)noteSplitLength.Value);
             else
-                convert = new ConversionProcess(palette, openedImagePixels, openedImageWidth == 256);
+                convert = new ConversionProcess(palette, openedImagePixels, openedImageWidth * 4, (int)firstKeyNumber.Value, (int)lastKeyNumber.Value + 1);
             convert.RunProcessAsync(ShowPreview);
             genImage.Source = null;
             saveMidi.IsEnabled = false;
@@ -360,8 +361,27 @@ namespace ImageToMidi
 
         private void ClusterisePalette_Click(object sender, RoutedEventArgs e)
         {
+            if (chosenPalette == null || openedImagePixels == null) return;
             chosenPalette = Clusterisation.Clusterise(chosenPalette, openedImagePixels, 10);
             ReloadPalettePreview();
+            ReloadPreview();
+        }
+
+        private void OpenedImage_ColorClicked(object sender, Color c)
+        {
+            if (colorPick)
+                colPicker.SendColor(c);
+        }
+
+        private void FirstKeyNumber_ValueChanged(object sender, RoutedPropertyChangedEventArgs<decimal> e)
+        {
+            lastKeyNumber.Minimum = firstKeyNumber.Value + 1;
+            ReloadPreview();
+        }
+
+        private void LastKeyNumber_ValueChanged(object sender, RoutedPropertyChangedEventArgs<decimal> e)
+        {
+            firstKeyNumber.Maximum = lastKeyNumber.Value - 1;
             ReloadPreview();
         }
     }

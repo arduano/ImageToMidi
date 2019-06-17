@@ -20,16 +20,37 @@ namespace ImageToMidi
     /// <summary>
     /// Interaction logic for ZoomableImage.xaml
     /// </summary>
+
+    public delegate void ColorClickedEventHandler(object sender, Color clicked);
+
+    public class RoutedColorClickedEventArgs : RoutedEventArgs
+    {
+        public RoutedColorClickedEventArgs(Color clickedColor, RoutedEvent e) : base(e)
+        {
+            ClickedColor = clickedColor;
+        }
+
+        protected override void InvokeEventHandler(Delegate genericHandler, object genericTarget)
+        {
+            ((ColorClickedEventHandler)genericHandler)(genericTarget, ClickedColor);
+        }
+
+        public Color ClickedColor { get; }
+    }
+
     public partial class ZoomableImage : UserControl
     {
-        public ImageSource Source
+        public BitmapSource Source
         {
-            get { return (ImageSource)GetValue(SourceProperty); }
+            get { return (BitmapSource)GetValue(SourceProperty); }
             set
             {
                 SetValue(SourceProperty, value);
-                Zoom = 1;
-                Offset = new Point(0, 0);
+                //smoothZoom.From = Zoom;
+                //smoothZoom.To = targetZoom;
+                //smoothZoomStoryboard.Begin();
+                //targetZoom = 1;
+                //Offset = new Point(0, 0);
                 shownImage.Source = value;
                 RefreshView();
             }
@@ -58,17 +79,53 @@ namespace ImageToMidi
         public static readonly DependencyProperty OffsetProperty =
             DependencyProperty.Register("point", typeof(Point), typeof(ZoomableImage), new PropertyMetadata(new Point(0, 0)));
 
+
+        public BitmapScalingMode ScalingMode
+        {
+            get { return (BitmapScalingMode)GetValue(ScalingModeProperty); }
+            set { SetValue(ScalingModeProperty, value); }
+        }
+
+        public static readonly DependencyProperty ScalingModeProperty =
+            DependencyProperty.Register("ScalingMode", typeof(BitmapScalingMode), typeof(ZoomableImage), new PropertyMetadata(BitmapScalingMode.Linear));
+
+
+
+
+        public bool ClickableColors
+        {
+            get { return (bool)GetValue(ClickableColorsProperty); }
+            set { SetValue(ClickableColorsProperty, value); }
+        }
+
+        public static readonly DependencyProperty ClickableColorsProperty =
+            DependencyProperty.Register("ClickableColors", typeof(bool), typeof(ZoomableImage), new PropertyMetadata(false));
+
+
+
+        public static readonly RoutedEvent ColorClickedEvent = EventManager.RegisterRoutedEvent(
+            "Clicked", RoutingStrategy.Bubble,
+            typeof(ColorClickedEventHandler), typeof(NumberSelect));
+
+        public event ColorClickedEventHandler ColorClicked
+        {
+            add { AddHandler(ColorClickedEvent, value); }
+            remove { RemoveHandler(ColorClickedEvent, value); }
+        }
+
+
         VelocityDrivenAnimation smoothZoom;
         Storyboard smoothZoomStoryboard;
 
         public ZoomableImage()
         {
             InitializeComponent();
-            
+            DataContext = this;
+
             smoothZoom = new VelocityDrivenAnimation();
             smoothZoom.From = 1.0;
             smoothZoom.To = 1.0;
-            smoothZoom.Duration = new Duration(TimeSpan.FromSeconds(0.15));
+            smoothZoom.Duration = new Duration(TimeSpan.FromSeconds(0.1));
 
             smoothZoomStoryboard = new Storyboard();
             smoothZoomStoryboard.Children.Add(smoothZoom);
@@ -99,22 +156,25 @@ namespace ImageToMidi
                 width = container.ActualHeight / aspect;
                 height = container.ActualHeight;
             }
+            var zoom = Zoom;
+            if (zoom < 1) zoom = 1;
             double leftMargin = 0;
             double topMargin = 0;
             leftMargin += width * Offset.X;
             topMargin += height * Offset.Y;
-            leftMargin *= Zoom;
-            topMargin *= Zoom;
-            shownImage.Width = width * Zoom;
-            shownImage.Height = height * Zoom;
-            leftMargin -= width * Zoom / 2;
-            topMargin -= height * Zoom / 2;
+            leftMargin *= zoom;
+            topMargin *= zoom;
+            shownImage.Width = width * zoom;
+            shownImage.Height = height * zoom;
+            leftMargin -= width * zoom / 2;
+            topMargin -= height * zoom / 2;
             leftMargin += container.ActualWidth / 2;
             topMargin += container.ActualHeight / 2;
             shownImage.Margin = new Thickness(leftMargin, topMargin, 0, 0);
         }
 
-        void UpdateZoomOffset(double oldval, double newval){
+        void UpdateZoomOffset(double oldval, double newval)
+        {
             double scaleMult = newval / oldval;
             double aspect = Source.Width / Source.Height;
             double containerAspect = container.ActualWidth / container.ActualHeight;
@@ -129,17 +189,12 @@ namespace ImageToMidi
                 width = container.ActualHeight / aspect;
                 height = container.ActualHeight;
             }
-            double left = 0;
-            double top = 0;
-            left += width * Offset.X;
-            top += height * Offset.Y;
-            left *= Zoom;
-            top *= Zoom;
             var pos = Mouse.GetPosition(container);
             pos = new Point(pos.X - (container.ActualWidth - width) / 2, pos.Y - (container.ActualHeight - height) / 2);
             pos = new Point(pos.X - width / 2, pos.Y - height / 2);
             pos = new Point(pos.X / width / Zoom + Offset.X, pos.Y / height / Zoom + Offset.Y);
             Offset = new Point((Offset.X - pos.X) * scaleMult + pos.X, (Offset.Y - pos.Y) * scaleMult + pos.Y);
+            ClampOffset();
         }
 
         private void Container_MouseWheel(object sender, MouseWheelEventArgs e)
@@ -194,21 +249,21 @@ namespace ImageToMidi
         {
             if (mouseIsDown)
             {
-                container.Cursor = Cursors.ScrollAll;
-
-                mouseNotMoved = false;
-
                 Point currentMousePos = e.GetPosition(container);
-
                 Point mouseOffset = (Point)(currentMousePos - mouseMoveStart);
-                Offset = new Point(Offset.X + mouseOffset.X / shownImage.ActualWidth, Offset.Y + mouseOffset.Y / shownImage.ActualHeight);
-                ClampOffset();
+                if (mouseOffset.X != 0 && mouseOffset.Y != 0)
+                {
+                    container.Cursor = Cursors.ScrollAll;
+                    mouseNotMoved = false;
+                    Offset = new Point(Offset.X + mouseOffset.X / shownImage.ActualWidth, Offset.Y + mouseOffset.Y / shownImage.ActualHeight);
+                    ClampOffset();
 
-                mouseMoveStart = currentMousePos;
-                offsetStart = Offset;
+                    mouseMoveStart = currentMousePos;
+                    offsetStart = Offset;
 
-                ClampOffset();
-                RefreshView();
+                    ClampOffset();
+                    RefreshView();
+                }
             }
         }
 
@@ -218,7 +273,45 @@ namespace ImageToMidi
             if (!mouseIsDown) return;
             if (mouseNotMoved)
             {
+                if (Source != null && ClickableColors)
+                {
+                    double aspect = Source.Width / Source.Height;
+                    double containerAspect = container.ActualWidth / container.ActualHeight;
+                    double width, height;
+                    if (aspect > containerAspect)
+                    {
+                        width = container.ActualWidth;
+                        height = container.ActualWidth / aspect;
+                    }
+                    else
+                    {
+                        width = container.ActualHeight / aspect;
+                        height = container.ActualHeight;
+                    }
+                    var pos = Mouse.GetPosition(container);
+                    pos = new Point(pos.X - (container.ActualWidth - width) / 2, pos.Y - (container.ActualHeight - height) / 2);
+                    pos = new Point(pos.X - width / 2, pos.Y - height / 2);
+                    pos = new Point(pos.X / width / Zoom - Offset.X, pos.Y / height / Zoom - Offset.Y);
 
+                    pos = new Point((pos.X + 0.5) * (Source.PixelWidth - 1), (pos.Y + 0.5) * (Source.PixelHeight - 1));
+
+                    int x = (int)Math.Round(pos.X);
+                    int y = (int)Math.Round(pos.Y);
+                    if (x >= 0 && x < Source.PixelWidth &&
+                        y >= 0 && y < Source.PixelHeight)
+                    {
+                        int stride = Source.PixelWidth * 4;
+                        int size = Source.PixelHeight * stride;
+                        var imagePixels = new byte[size];
+                        Source.CopyPixels(imagePixels, stride, 0);
+                        int pixel = y * stride + x * 4;
+                        if (imagePixels[pixel + 3] != 0)
+                        {
+                            var c = Color.FromRgb(imagePixels[pixel + 2], imagePixels[pixel + 1], imagePixels[pixel + 0]);
+                            RaiseEvent(new RoutedColorClickedEventArgs(c, ColorClickedEvent));
+                        }
+                    }
+                }
             }
             else
             {
@@ -257,46 +350,42 @@ namespace ImageToMidi
 
         public VelocityDrivenAnimation() { }
 
-        double timeOffset = 0;
-
         protected override Freezable CreateInstanceCore()
         {
-            if (velocity > 0 ^ To > From) velocity = 0;
             double v = velocity;
             double s = From;
             double f = To;
-            if(v < 0)
-            {
-
-            }
-            if(f < s)
-            {
-                f = From;
-                s = To;
-                v = -v;
-            }
-            double startPos = 0.5 - Math.Sqrt((Math.Sqrt((f - s) * (f - s + 4 * v)) - v + s - f) / v) / 2;
-            if (double.IsNaN(startPos) || double.IsInfinity(startPos))
-                startPos = 0;
             var instance = new VelocityDrivenAnimation()
             {
                 parent = this,
                 From = From,
                 To = To,
-                timeOffset = startPos
+                velocity = velocity
             };
             return instance;
         }
 
+        double easeFunc(double x, double v) => (-2 + 4 * x + v * (1 + 2 * x * (1 + x * (-5 - 2 * (x - 3) * x)))) / (4 + 8 * (x - 1) * x);
+        double easeVelFunc(double x, double v) => -((x - 1) * (2 * x + v * (x - 1) * (-1 + 4 * x * (1 + (x - 1) * x)))) / Math.Pow(1 + 2 * (x - 1) * x, 2);
+
         protected override double GetCurrentValueCore(double defaultOriginValue, double defaultDestinationValue, AnimationClock animationClock)
         {
-            double t = timeOffset + (double)animationClock.CurrentProgress * (1 - timeOffset);
             double s = From;
             double f = To;
-            double value = Math.Pow(t, 2) / (Math.Pow(t, 2) + Math.Pow(1 - t, 2)) * (f - s) + s;
-            parent.velocity = -(2 * (f - s) * (t - 1) * t) / Math.Pow(1 + 2 * (t - 1) * t, 2);
-            return value;
-            return 1;
+            double dist = f - s;
+            if(dist ==0)
+            {
+                parent.velocity = 0;
+                return s;
+            }
+            double v = velocity / dist;
+            double x = (double)animationClock.CurrentProgress;
+
+            double ease = easeFunc(x, v) - easeFunc(0, v);
+            double vel = easeVelFunc(x, v);
+
+            parent.velocity = vel * dist;
+            return ease * dist + s;
         }
     }
 }
