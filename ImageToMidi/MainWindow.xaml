@@ -70,7 +70,7 @@
                         <CheckBox DockPanel.Dock="Left" Checked="GenColorEventsCheck_Checked" Unchecked="GenColorEventsCheck_Checked" IsChecked="True" Name="genColorEventsCheck" Padding="2" VerticalAlignment="Top">
                             <Label Padding="2" Margin="0,2,0,0">Generate Color Events</Label>
                         </CheckBox>
-                        <DockPanel Opacity="1" Name="randomSeedBox" DockPanel.Dock="Left" Grid.Column="0" HorizontalAlignment="Left" Margin="20,1,0,0" VerticalAlignment="Top">
+                        <DockPanel Opacity="0" Name="randomSeedBox" DockPanel.Dock="Left" Grid.Column="0" HorizontalAlignment="Left" Margin="20,1,0,0" VerticalAlignment="Top">
                             <Label>Preview color seed</Label>
                             <local:NumberSelect ValueChanged="FirstKeyNumber_ValueChanged" x:Name="randomColorSeed" Margin="0,0,0,0" Value="0" Minimum="0" Maximum="254" Width="70"></local:NumberSelect>
                         </DockPanel>
@@ -134,7 +134,14 @@
                         <Viewbox DockPanel.Dock="Top" Stretch="Uniform">
                             <local:ColorPicker16 x:Name="colPicker" Width="Auto" Height="Auto" Grid.ColumnSpan="2" Grid.Row="1" VerticalAlignment="Top"/>
                         </Viewbox>
-                        <Label DockPanel.Dock="Top" Name="colPickerHint" Opacity="0" Content="Click the image on the left to pick a color"></Label>
+                        <DockPanel Opacity="0" Name="colPickerOptions" HorizontalAlignment="Left" VerticalAlignment="Top">
+                            <Label DockPanel.Dock="Top" Content="Click the image on the left or type the hex bellow to pick a color"></Label>
+                            <DockPanel LastChildFill="False" Height="23">
+                                <Label Padding="0,4,3,0" Height="Auto">#</Label>
+                                <TextBox Name="colHex" TextChanged="ColHex_TextChanged" KeyDown="ColHex_KeyDown" MaxLength="6" Height="Auto" Padding="2,0,2,0" Text="" Width="52" Foreground="White"></TextBox>
+                                <Button Padding="0,0,0,1" Click="SetHexButton_Click" Name="setHexButton" Width="70" Height="Auto" Margin="10,0,0,0">Set</Button>
+                            </DockPanel>
+                        </DockPanel>
                     </DockPanel>
                 </TabItem>
                 <TabItem Opacity="0">

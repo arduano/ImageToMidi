@@ -88,6 +88,16 @@ namespace ImageToMidi
 
         private void Button_LostFocus(object sender, RoutedEventArgs e)
         {
+            //if (colorPickerButton != -1)
+            //{
+            //    ((PackIcon)getButton(colorPickerButton).Content).Kind = PackIconKind.Eyedropper;
+            //    colorPickerButton = -1;
+            //    PickStop();
+            //}
+        }
+
+        public void CancelPick()
+        {
             if (colorPickerButton != -1)
             {
                 ((PackIcon)getButton(colorPickerButton).Content).Kind = PackIconKind.Eyedropper;

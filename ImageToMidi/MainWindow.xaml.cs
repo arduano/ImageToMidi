@@ -92,7 +92,7 @@ namespace ImageToMidi
 
             MakeFadeInOut(selectedHighlightLeft);
             MakeFadeInOut(selectedHighlightRight);
-            MakeFadeInOut(colPickerHint);
+            MakeFadeInOut(colPickerOptions);
             MakeFadeInOut(openedImage);
             MakeFadeInOut(genImage);
             MakeFadeInOut(randomSeedBox);
@@ -131,6 +131,7 @@ namespace ImageToMidi
 
         private void RawMidiSelect_Click(object sender, RoutedEventArgs e)
         {
+            colPicker.CancelPick(); 
             if (!leftSelected)
                 TriggerMenuTransition(true);
             leftSelected = true;
@@ -139,6 +140,7 @@ namespace ImageToMidi
 
         private void ColorEventsSelect_Click(object sender, RoutedEventArgs e)
         {
+            colPicker.CancelPick(); 
             if (leftSelected)
                 TriggerMenuTransition(false);
             leftSelected = false;
@@ -147,6 +149,7 @@ namespace ImageToMidi
 
         private void BrowseImage_Click(object sender, RoutedEventArgs e)
         {
+            colPicker.CancelPick(); 
             OpenFileDialog open = new OpenFileDialog();
             open.Filter = "Common image files (*.png;*.jpg;*.jpeg;*.bmp)|*.png;*.jpg;*.jpeg;*.bmp";
             if (!(bool)open.ShowDialog()) return;
@@ -202,15 +205,16 @@ namespace ImageToMidi
 
         private void ColPicker_PickStart()
         {
+            colHex.Text = "";
             Cursor = Cursors.Cross;
-            ((Storyboard)colPickerHint.GetValue(FadeInStoryboard)).Begin();
+            ((Storyboard)colPickerOptions.GetValue(FadeInStoryboard)).Begin();
             colorPick = true;
         }
 
         private void ColPicker_PickStop()
         {
             Cursor = Cursors.Arrow;
-            ((Storyboard)colPickerHint.GetValue(FadeOutStoryboard)).Begin();
+            ((Storyboard)colPickerOptions.GetValue(FadeOutStoryboard)).Begin();
             colorPick = false;
         }
 
@@ -323,6 +327,7 @@ namespace ImageToMidi
 
         private void SaveMidi_Click(object sender, RoutedEventArgs e)
         {
+            colPicker.CancelPick(); 
             SaveFileDialog save = new SaveFileDialog();
             save.Filter = "Midi files (*.mid)|*.mid";
             if (!(bool)save.ShowDialog()) return;
@@ -403,6 +408,70 @@ namespace ImageToMidi
                 ((Storyboard)randomSeedBox.GetValue(FadeOutStoryboard)).Begin();
             else
                 ((Storyboard)randomSeedBox.GetValue(FadeInStoryboard)).Begin();
+        }
+
+        string prevHexText = "";
+
+        Color ParseHex(string hex, bool checkLen = false)
+        {
+            if (hex.Length != 6 && checkLen) throw new Exception("Invalid hex");
+            if (hex.Length == 0 && !checkLen) return Colors.Black;
+            try
+            {
+                int col = int.Parse(hex.ToUpper(), System.Globalization.NumberStyles.HexNumber);
+                Color c = Color.FromRgb(
+                        (byte)((col >> 16) & 0xFF),
+                        (byte)((col >> 8) & 0xFF),
+                        (byte)((col >> 0) & 0xFF)
+                    );
+                return c;
+            }
+            catch { throw new Exception("Invalid hex"); }
+        }
+
+        private void ColHex_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            try
+            {
+                ParseHex(colHex.Text);
+                prevHexText = colHex.Text;
+            }
+            catch { colHex.Text = prevHexText; }
+        }
+
+        private void ColHex_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                Color c;
+                try
+                {
+                    c = ParseHex(colHex.Text, true);
+                }
+                catch
+                {
+                    MessageBox.Show("Invalid hex RGB color");
+                    return;
+                }
+                ColPicker_PickStop();
+                colPicker.SendColor(c);
+            }
+        }
+
+        private void SetHexButton_Click(object sender, RoutedEventArgs e)
+        {
+            Color c;
+            try
+            {
+                c = ParseHex(colHex.Text, true);
+            }
+            catch
+            {
+                MessageBox.Show("Invalid hex RGB color");
+                return;
+            }
+            ColPicker_PickStop();
+            colPicker.SendColor(c);
         }
     }
 }
