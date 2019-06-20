@@ -216,6 +216,12 @@ namespace ImageToMidi
             writer.WriteFormat(1);
             writer.WritePPQ((ushort)ppq);
             writer.WriteNtrks((ushort)tracks);
+
+            //writer.InitTrack();
+            //writer.Write(new TimeSignatureEvent(0, 4, 2, 24, 8));
+            //writer.Write(new TempoEvent(0, 500000));
+            //writer.EndTrack();
+
             for (int i = 0; i < tracks; i++)
             {
                 writer.InitTrack();

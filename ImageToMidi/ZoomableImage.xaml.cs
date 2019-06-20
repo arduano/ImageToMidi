@@ -365,8 +365,12 @@ namespace ImageToMidi
             return instance;
         }
 
-        double easeFunc(double x, double v) => (-2 + 4 * x + v * (1 + 2 * x * (1 + x * (-5 - 2 * (x - 3) * x)))) / (4 + 8 * (x - 1) * x);
-        double easeVelFunc(double x, double v) => -((x - 1) * (2 * x + v * (x - 1) * (-1 + 4 * x * (1 + (x - 1) * x)))) / Math.Pow(1 + 2 * (x - 1) * x, 2);
+        double easeFunc(double x, double v) => 
+            (-2 + 4 * x + v * (1 + 2 * x * (1 + x * (-5 - 2 * (x - 3) * x)))) /
+            (4 + 8 * (x - 1) * x);
+        double easeVelFunc(double x, double v) => 
+            -((x - 1) * (2 * x + v * (x - 1) * (-1 + 4 * x * (1 + (x - 1) * x)))) /
+            Math.Pow(1 + 2 * (x - 1) * x, 2);
 
         protected override double GetCurrentValueCore(double defaultOriginValue, double defaultDestinationValue, AnimationClock animationClock)
         {
