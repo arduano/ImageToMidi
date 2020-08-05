@@ -105,7 +105,7 @@ namespace ImageToMidi
 
         public static readonly RoutedEvent ColorClickedEvent = EventManager.RegisterRoutedEvent(
             "Clicked", RoutingStrategy.Bubble,
-            typeof(ColorClickedEventHandler), typeof(NumberSelect));
+            typeof(ColorClickedEventHandler), typeof(ZoomableImage));
 
         public event ColorClickedEventHandler ColorClicked
         {
@@ -323,8 +323,6 @@ namespace ImageToMidi
 
     class VelocityDrivenAnimation : DoubleAnimationBase
     {
-
-
         public double From
         {
             get { return (double)GetValue(FromProperty); }
@@ -383,7 +381,7 @@ namespace ImageToMidi
                 return s;
             }
             double v = velocity / dist;
-            double x = (double)animationClock.CurrentProgress;
+            double x = (double)animationClock.CurrentProgress / 2 + 0.5;
 
             double ease = easeFunc(x, v) - easeFunc(0, v);
             double vel = easeVelFunc(x, v);
